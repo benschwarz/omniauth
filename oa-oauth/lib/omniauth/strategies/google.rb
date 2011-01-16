@@ -19,7 +19,10 @@ module OmniAuth
         :book_search      => "https://www.google.com/books/feeds/",
         :blogger          => "https://www.blogger.com/feeds/",
         :calendar         => "https://www.google.com/calendar/feeds/",
-        :contacts         => "http://www.google.com/m8/feeds",
+        :contacts         => {
+          :uri => "http://www.google.com/m8/feeds",
+          :user_info => "http://www.google.com/m8/feeds/contacts/default/full?max-results=1&alt=json"
+        },
         :chrome_web_store => "https://www.googleapis.com/auth/chromewebstore.readonly",
         :docs             => "https://docs.google.com/feeds/",
         :finance          => "https://finance.google.com/finance/feeds/",
@@ -38,7 +41,10 @@ module OmniAuth
         :wave             => "http://wave.googleusercontent.com/api/rpc",
         :webmaster_tools  => "https://www.google.com/webmasters/tools/feeds/",
         :youtube          => "https://gdata.youtube.com",
-        :reader           => "https://www.google.com/reader/api/"
+        :reader           => {
+          :uri => "https://www.google.com/reader/api/", 
+          :user_info => "http://www.google.com/reader/api/0/user-info"
+        }
       }
       
       def initialize(app, consumer_key = nil, consumer_secret = nil, options = {}, &block)
@@ -55,12 +61,8 @@ module OmniAuth
       end
       
       def auth_hash
-        ui = user_info
-        OmniAuth::Utils.deep_merge(super, {
-          'uid' => ui['uid'],
-          'user_info' => ui,
-          'extra' => {'user_hash' => user_hash}
-        })
+        # ui = user_info
+        OmniAuth::Utils.deep_merge(super, user_hash)
       end
       
       def user_info
@@ -84,12 +86,12 @@ module OmniAuth
         # however. It will fail in the extremely rare case of a user who has
         # a Google Account but has never even signed up for Gmail. This has
         # not been seen in the field.
-        @user_hash ||= MultiJson.decode(@access_token.get("http://www.google.com/m8/feeds/contacts/default/full?max-results=1&alt=json").body)
+        @user_hash ||= MultiJson.decode(@access_token.get(SCOPES[options[:scope][:user_info]]).body)
       end
 
       # Monkeypatch OmniAuth to pass the scope in the consumer.get_request_token call
       def request_phase
-        request_token = consumer.get_request_token({:oauth_callback => callback_url}, {:scope => SCOPES[options[:scope]]})
+        request_token = consumer.get_request_token({:oauth_callback => callback_url}, {:scope => SCOPES[options[:scope][:uri]]})
 
         (session['oauth']||={})[name.to_s] = {'callback_confirmed' => request_token.callback_confirmed?, 'request_token' => request_token.token, 'request_secret' => request_token.secret}
         r = Rack::Response.new
