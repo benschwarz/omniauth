@@ -21,7 +21,7 @@ module OmniAuth
         :calendar         => "https://www.google.com/calendar/feeds/",
         :contacts         => {
           :uri => "http://www.google.com/m8/feeds",
-          :user_info => "http://www.google.com/m8/feeds/contacts/default/full?max-results=1&alt=json"
+          :user_info => "contacts/default/full?max-results=1&alt=json"
         },
         :chrome_web_store => "https://www.googleapis.com/auth/chromewebstore.readonly",
         :docs             => "https://docs.google.com/feeds/",
@@ -42,7 +42,7 @@ module OmniAuth
         :webmaster_tools  => "https://www.google.com/webmasters/tools/feeds/",
         :youtube          => "https://gdata.youtube.com",
         :reader           => {
-          :uri => "https://www.google.com/reader/api/", 
+          :uri => "http://www.google.com/reader/api/", 
           :user_info => "0/user-info"
         }
       }
@@ -56,6 +56,8 @@ module OmniAuth
         }
         
         options[:scope] = :contacts unless options.key? :scope
+
+        options[:scope] ||= "http://www.google.com/m8/feeds"
 
         super(app, :google, consumer_key, consumer_secret, client_options, options)
       end
