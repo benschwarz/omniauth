@@ -43,7 +43,7 @@ module OmniAuth
         :youtube          => "https://gdata.youtube.com",
         :reader           => {
           :uri => "https://www.google.com/reader/api/", 
-          :user_info => "http://www.google.com/reader/api/0/user-info"
+          :user_info => "0/user-info"
         }
       }
       
@@ -86,12 +86,13 @@ module OmniAuth
         # however. It will fail in the extremely rare case of a user who has
         # a Google Account but has never even signed up for Gmail. This has
         # not been seen in the field.
-        @user_hash ||= MultiJson.decode(@access_token.get(SCOPES[options[:scope][:user_info]]).body)
+        user_info_path = SCOPES[options[:scope]][:uri] + SCOPES[options[:scope]][:user_info]
+        @user_hash ||= MultiJson.decode(@access_token.get(user_info_path).body)
       end
 
       # Monkeypatch OmniAuth to pass the scope in the consumer.get_request_token call
       def request_phase
-        request_token = consumer.get_request_token({:oauth_callback => callback_url}, {:scope => SCOPES[options[:scope][:uri]]})
+        request_token = consumer.get_request_token({:oauth_callback => callback_url}, {:scope => SCOPES[options[:scope]][:uri]})
 
         (session['oauth']||={})[name.to_s] = {'callback_confirmed' => request_token.callback_confirmed?, 'request_token' => request_token.token, 'request_secret' => request_token.secret}
         r = Rack::Response.new
